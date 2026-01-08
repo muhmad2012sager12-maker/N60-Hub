@@ -1,0 +1,63 @@
+local P,R,L,u,c=game:GetService("Players"),game:GetService("RunService"),game.Players.LocalPlayer,UDim2.new,Color3.fromRGB;
+local G,T,M=Instance.new("ScreenGui",L.PlayerGui),Instance.new("TextButton"),Instance.new("Frame")G.ResetOnSpawn=false;
+T.Parent,M.Parent,T.Size,T.Text,T.BackgroundColor3=G,G,u(0,60,0,60),"N60",c(15,15,15)T.Draggable=true;
+M.Size,M.Position,M.Visible,M.BackgroundColor3,M.Active,M.Draggable=u(0,280,0,320),u(.5,-140,.5,-160),false,c(10,10,10),true,true;
+Instance.new("UIStroke",M).Color=c(0,120,255)T.MouseButton1Click:Connect(function()M.Visible=not M.Visible end)
+
+local lastPos,isInv = nil, false
+local Inv=Instance.new("TextButton",M)Inv.Size,Inv.Position,Inv.Text,Inv.BackgroundColor3=u(.9,0,0,30),u(.05,0,.85,0),"وضع الاختفاء: مطفأ",c(50,50,50)
+Inv.MouseButton1Click:Connect(function()isInv=not isInv;Inv.Text=isInv and "وضع الاختفاء: مفعل" or "وضع الاختفاء: مطفأ" Inv.BackgroundColor3=isInv and c(0,150,0) or c(50,50,50)
+if L.Character then for _,v in pairs(L.Character:GetDescendants())do if v:IsA("BasePart") or v:IsA("Decal") then v.Transparency = isInv and 1 or 0 end end end end)
+
+local I,B,Sc=Instance.new("TextBox",M),Instance.new("TextButton",M),Instance.new("ScrollingFrame",M)
+I.Size,I.Position,I.PlaceholderText,I.BackgroundColor3=u(.6,0,0,30),u(.05,0,.05,0),"اسم اللاعب..",c(20,20,20)
+B.Size,B.Position,B.Text,B.BackgroundColor3=u(.25,0,0,30),u(.7,0,.05,0),"بحث",c(0,80,200)
+Sc.Size,Sc.Position,Sc.CanvasSize,Sc.BackgroundTransparency,Sc.ScrollBarThickness=u(.9,0,.6,0),u(.05,0,.15,0),u(0,0,5,0),1,5;
+local UIList=Instance.new("UIListLayout",Sc)UIList.Padding=UDim.new(0,10)
+
+local acts={}
+local function addPlayer(p)
+    if not p or Sc:FindFirstChild(p.Name) then return end
+    local C=Instance.new("Frame",Sc)C.Name=p.Name;C.Size,C.BackgroundColor3=u(1,0,0,100),c(25,25,25)
+    local i,t,x=Instance.new("ImageLabel",C),Instance.new("TextLabel",C),Instance.new("TextButton",C)
+    i.Size,i.Image=u(0,40,0,40),"rbxthumb://type=AvatarHeadShot&id="..p.UserId.."&w=150&h=150"
+    t.Size,t.Position,t.Text,t.TextColor3,t.BackgroundTransparency=u(.6,0,.3,0),u(.2,0,0,0),p.Name,c(255,255,255),1
+    x.Size,x.Position,x.Text,x.BackgroundColor3=u(.15,0,0,25),u(.85,0,0,0),"X",c(200,0,0)
+    x.MouseButton1Click:Connect(function()C:Destroy()acts[p.Name]=nil end)
+    local function btn(txt,pos,ac)
+        local b=Instance.new("TextButton",C)b.Size,b.Position,b.Text,b.BackgroundColor3,b.TextColor3=u(.28,0,0,25),pos,txt,c(255,255,255),c(0,0,0)
+        b.MouseButton1Click:Connect(function()
+            if ac=="tp" then L.Character.HumanoidRootPart.CFrame=p.Character.HumanoidRootPart.CFrame 
+            elseif ac=="view" then if workspace.CurrentCamera.CameraSubject == p.Character.Humanoid then workspace.CurrentCamera.CameraSubject = L.Character.Humanoid b.BackgroundColor3=c(255,255,255) else workspace.CurrentCamera.CameraSubject = p.Character.Humanoid b.BackgroundColor3=c(0,255,0) end
+            else 
+                if acts[p.Name] == ac then 
+                    acts[p.Name] = 0 b.BackgroundColor3=c(255,255,255)
+                    if ac == 4 and lastPos then L.Character.HumanoidRootPart.CFrame = lastPos end
+                else 
+                    if ac == 4 then lastPos = L.Character.HumanoidRootPart.CFrame end
+                    acts[p.Name] = ac b.BackgroundColor3=c(0,255,0) 
+                end
+            end 
+        end)
+    end
+    btn("زغب",u(.02,0,.35,0),1)btn("يمىص",u(.35,0,.35,0),2)btn("فلينق",u(.68,0,.35,0),4)
+    btn("تنقل",u(.02,0,.68,0),"tp")btn("مراقبة",u(.35,0,.68,0),"view")btn("فصل",u(.68,0,.68,0),0)
+end
+
+B.MouseButton1Click:Connect(function()local q=I.Text:lower()for _,p in pairs(P:GetPlayers())do if p.Name:lower():find(q)and p~=L then addPlayer(p)end end end)
+local tool=Instance.new("Tool",L.Backpack)tool.Name="N60 Search";tool.RequiresHandle=true;local handle=Instance.new("Part",tool)handle.Name="Handle";handle.Size=Vector3.new(1,1,1);handle.Transparency=0.5;handle.BrickColor=BrickColor.new("Bright blue")
+tool.Handle.Touched:Connect(function(hit) local pl=P:GetPlayerFromCharacter(hit.Parent) or P:GetPlayerFromCharacter(hit.Parent.Parent) if pl and pl~=L then addPlayer(pl) M.Visible=true end end)
+
+R.Heartbeat:Connect(function()
+    for name,act in pairs(acts) do 
+        local p=P:FindFirstChild(name)
+        if p and p.Character and L.Character then
+            local h,th=L.Character:FindFirstChild("HumanoidRootPart"),p.Character:FindFirstChild("HumanoidRootPart")
+            if h and th then 
+                if act==1 then h.CFrame=th.CFrame*CFrame.new(0,0,1.2)*CFrame.new(0,0,math.sin(tick()*25)*0.8)
+                elseif act==2 then h.CFrame=th.CFrame*CFrame.new(0,1.5,-1.2)*CFrame.Angles(0,math.pi,0)*CFrame.new(0,0,math.sin(tick()*25)*0.8)
+                elseif act==4 then h.Velocity=Vector3.new(0,9e5,0)h.CFrame=th.CFrame end 
+            end 
+        end 
+    end 
+end)
